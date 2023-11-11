@@ -1,5 +1,8 @@
 /**
  * Egy Google űrlapon történő válasz rögzítésére autmatikus eseménybejegyzés létrehozása a naptárban
+ * Az űrlap beküldéseit külön táblázatba kell leválasztani, majd ebben a táblázatban egy plusz oszlopot felvenni és az 
+ * eseményindítót „űrlap beküldése” eseményre beállítani.
+ *
  * Alap: http://wafflebytes.blogspot.com/2017/06/google-script-create-calendar-events.html
  * Hasonló: https://bionicteaching.com/google-calendar-events-via-google-form/
  * API: https://developers.google.com/apps-script/reference/calendar/calendar#createEvent(String,Date,Date,Object)
