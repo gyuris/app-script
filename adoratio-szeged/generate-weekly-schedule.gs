@@ -14,19 +14,21 @@ const CALENDAR_SILENT       = 'adoratio.szeged@gmail.com'; // alapértelmezett
 const CALENDAR_WORSHIP      = '359919ac3b0ae60f349cd7fa3eb4d54527c08259f6f80eb03b9ea3732e3ae684@group.calendar.google.com';
 const CALENDAR_LAUD         = 'd71ab7261481207181b04219a2aa964f68234b19aef0daed659b0ee34aa915bf@group.calendar.google.com';
 const CALENDAR_BIBLE        = '518f8b15885e20f9801f3e8968a810328f76fba6eb1d7ccb0e2b8dbc69b217f2@group.calendar.google.com';
-const RECIPIENT_LIST        = "adoratio-szeged@googlegroups.com";
-const RECIPIENT_TEAM        = "miriamaradi@t-online.hu, jobel@ujevangelizacio.hu, csaladkozpont@gmail.com";
-const TZ                    = "Europe/Budapest";
+const RECIPIENT_LIST        = 'adoratio-szeged@googlegroups.com';
+const RECIPIENT_TEAM        = 'miriamaradi@t-online.hu, jobel@ujevangelizacio.hu, csaladkozpont@gmail.com';
+const TZ                    = 'Europe/Budapest';
 
 // main
 function sendEmail() {
   let events = getCalendarText();
+  let messageHTML = '<h2>Kedves Adoráló testvérek!</h2><p>A következő hét beosztását alább találjátok. Áldott együttlétet kívánunk nektek az Úr előtt!<p/><p>Ha helyettesítés szükséges, kérjük, keressétek a koordinátort, Aradi Marit <a href="tel:+36204260219">+36204260219</a>.</p><p>Szeretettel: a vezetői csapat</p><hr>' + events.html;
   GmailApp.sendEmail(
     RECIPIENT_LIST,
     "Következő hét beosztása: " + Utilities.formatDate(events.start, TZ, "w") + ". hét\n",
-    "Kedves Adoráló testvérek!\n\nA következő hét beosztását alább találjátok. Áldott együttlétet kívánunk nektek az Úr előtt! Ha helyettesítés szükséges, kérjük, keressétek a koordinátort: Aradi Marit +36204260219\n\nSzeretettel: a vezetői csapat\n\n" + events.html,
+    stripHtml(messageHTML),
     {
-      name: 'Adoratio Szeged'
+      name: 'Adoratio Szeged',
+      htmlBody : messageHTML
     }
   );
   let file = createChecklistDocument();
@@ -112,7 +114,7 @@ function createChecklistDocument(sDate) {
 function getCalendarText(){
   let events = getEvents();
   // hanyadik hét
-  let html = Utilities.formatDate(events.start, TZ, "w") + ". hét\n";
+  let html = "<h3>" + Utilities.formatDate(events.start, TZ, "w") + ". hét</h3>";
   // események lekérdezése a naptárból a dátumok alapján
   if (events.data.length > 0) {
     let day = Utilities.formatDate(new Date(), TZ, "d");
@@ -125,14 +127,14 @@ function getCalendarText(){
         let dateMonth = getHUNMonth(event.getStartTime().getMonth());
         let dateDayName = getHUNday(event.getStartTime().getDay());
         let dateDay = Utilities.formatDate(event.getStartTime(), TZ, "d");
-        html += "\n" + year + ". " + dateMonth + " " + dateDay + "., " + dateDayName + "\n";
+        html += '<h4>' + year + '. ' + dateMonth + ' ' + dateDay + '., ' + dateDayName + '</h4>';
       }
       // az esemény adatainak a kiiratása
       let start = Utilities.formatDate(event.getStartTime(), TZ, "HH:mm");
       let end = Utilities.formatDate(event.getEndTime(), TZ, "HH:mm");
       let title = event.getTitle();
       let description = event.getDescription().replace(/<\/?[^>]+(>|$)/g, "");
-      html += start + "–" + end + " " + title + " (" + description +")\n";
+      html += '<p><span>' + start + '–' + end + '</span> <strong>' + title + '</strong> (<a href="tel:' + description + '">' + description +'</a>)</p>';
            // következő nap vizsgálatához
       day = Utilities.formatDate(event.getStartTime(), TZ, "d");
     }
@@ -175,6 +177,11 @@ function getNextMonday(date = new Date()) {
   );
   nextMonday.setHours(0, 0, 0);
   return nextMonday;
+}
+
+// eltávolítja a HTML címkéket úgy, hogy ügyel a blokk szintű elemek új sorral való helyes helyettesítésére
+function stripHtml(sHTML) {
+   return sPlainText = sHTML.replace(/(<(h1|h2|h3|h4|h5|h6|hr|div)>)/gi, "\n\n").replace(/(<(p|li)>)/gi, "\n").replace(/(<([^>]+)>)/gi, "");
 }
 
 function getHUNMonth(n) {
