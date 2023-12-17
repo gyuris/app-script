@@ -8,15 +8,15 @@
 // Időzítés a "Triggerek" menüpontban
 
 // Globális beállítások:
-const DESTINATION_FOLDER_ID = '16eM0bclWDkKqwutW6KBfB5EPqz6if9Uc'; // "Heti beosztások" mappa
-const TEMPLATE_FILE_ID      = '1BMJDG-KenFPPEC5WnNzFAWjFIQKO-lF2LTjp5MRu-mQ'; // "Heti beosztás, ellenőrzőlista SABLON" zárolt dokumentum
-const CALENDAR_SILENT       = 'adoratio.szeged@gmail.com'; // alapértelmezett
-const CALENDAR_WORSHIP      = '359919ac3b0ae60f349cd7fa3eb4d54527c08259f6f80eb03b9ea3732e3ae684@group.calendar.google.com';
-const CALENDAR_LAUD         = 'd71ab7261481207181b04219a2aa964f68234b19aef0daed659b0ee34aa915bf@group.calendar.google.com';
-const CALENDAR_BIBLE        = '518f8b15885e20f9801f3e8968a810328f76fba6eb1d7ccb0e2b8dbc69b217f2@group.calendar.google.com';
-const RECIPIENT_LIST        = 'adoratio-szeged@googlegroups.com';
-const RECIPIENT_TEAM        = 'miriamaradi@t-online.hu, jobel@ujevangelizacio.hu, csaladkozpont@gmail.com';
-const TZ                    = 'Europe/Budapest';
+const DESTINATION_FOLDER_ID = PropertiesService.getScriptProperties().getProperty('DESTINATION_FOLDER_ID'); // A mappa a beosztások számára
+const TEMPLATE_FILE_ID      = PropertiesService.getScriptProperties().getProperty('TEMPLATE_FILE_ID'); // A sablonként használt zárolt G dokumentum
+const CALENDAR_SILENT       = PropertiesService.getScriptProperties().getProperty('CALENDAR_SILENT');  // Alapértelmezett naptár: csendes ima
+const CALENDAR_WORSHIP      = PropertiesService.getScriptProperties().getProperty('CALENDAR_WORSHIP'); // Naptár 2: énekes
+const CALENDAR_LAUD         = PropertiesService.getScriptProperties().getProperty('CALENDAR_LAUD');    // Naptár 3: hangos, kötött
+const CALENDAR_BIBLE        = PropertiesService.getScriptProperties().getProperty('CALENDAR_BIBLE');   // Naptár 4: Igeolvasás
+const TZ                    = PropertiesService.getScriptProperties().getProperty('TZ');               // Időzőna
+const RECIPIENT_LIST        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_LIST');   // A heti beosztást megkapók e-mail-címe
+const RECIPIENT_TEAM        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_TEAM');   // A heti nyomtatási megkapók e-mail-címe
 
 // main
 function sendEmail() {
