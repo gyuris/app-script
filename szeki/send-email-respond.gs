@@ -4,13 +4,13 @@
  * Gyuris Gellért
  */
 
-const EMAIL_TEMPLATE_FILE_ID    = "1BSJjUwcH7gFsNDCkYsv70ikWhDOddD0R3rVkRIOdkxs"; // Az email sablon azonosítója, érdemes zárolttá tenni az elkészülte után
-const COMPLETE_TEXT             = "Visszajelzés elküldve"; // A táblázat utolsó oszlopában megjelenő szöveg, ha az email ki lett küldve. Ezt az utolsó oszlopot fel kell venni, pl. "Visszajelzés"
-const EMAIL_FROM_EMAIL          = "gellert.gyuris@gmail.com"; // Feladó
-const EMAIL_FROM_NAME           = "Gyuris Gellért automata"; // Feladó neve
-const EMAIL_REPLY_TO            = "gyuris.gellert@kateketa.hu"; // Visszatérő email
-const EMAIL_SUBJECT             = "Adventi flashmob regisztráció: demo és kotta" // Levél tárgya
-const RECIPIENT_EMAIL_COLUMN_ID = "E-mail-cím"; // Az email címet tartalmazó oszlop fejléce
+const EMAIL_TEMPLATE_FILE_ID    = PropertiesService.getScriptProperties().getProperty('EMAIL_TEMPLATE_FILE_ID'); // Az email sablon azonosítója, érdemes zárolttá tenni az elkészülte után
+const COMPLETE_TEXT             = PropertiesService.getScriptProperties().getProperty('COMPLETE_TEXT'); // A táblázat utolsó oszlopában megjelenő szöveg, ha az email ki lett küldve. Ezt az oszlopot fel kell venni, pl. "Visszajelzés"
+const EMAIL_FROM_EMAIL          = PropertiesService.getScriptProperties().getProperty('EMAIL_FROM_EMAIL'); // Feladó e-mail címe
+const EMAIL_FROM_NAME           = PropertiesService.getScriptProperties().getProperty('EMAIL_FROM_NAME'); // Feladó neve
+const EMAIL_REPLY_TO            = PropertiesService.getScriptProperties().getProperty('EMAIL_REPLY_TO'); // Visszatérő (replay) email cím
+const EMAIL_SUBJECT             = PropertiesService.getScriptProperties().getProperty('EMAIL_SUBJECT'); // Levél tárgya
+const RECIPIENT_EMAIL_COLUMN_ID = PropertiesService.getScriptProperties().getProperty('RECIPIENT_EMAIL_COLUMN_ID'); // Az email címet tartalmazó oszlop fejléce (a fejlécben lévő szöveg)
 
 function sendEmailRespond() {
   var sheet = SpreadsheetApp.getActiveSheet();
