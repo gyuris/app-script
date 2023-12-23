@@ -14,40 +14,51 @@ const CALENDAR_SILENT       = PropertiesService.getScriptProperties().getPropert
 const CALENDAR_WORSHIP      = PropertiesService.getScriptProperties().getProperty('CALENDAR_WORSHIP'); // Naptár 2: énekes
 const CALENDAR_LAUD         = PropertiesService.getScriptProperties().getProperty('CALENDAR_LAUD');    // Naptár 3: hangos, kötött
 const CALENDAR_BIBLE        = PropertiesService.getScriptProperties().getProperty('CALENDAR_BIBLE');   // Naptár 4: Igeolvasás
+const CALENDAR_CHURCH       = PropertiesService.getScriptProperties().getProperty('CALENDAR_CHURCH');  // Templomi propramok naptára
 const TZ                    = PropertiesService.getScriptProperties().getProperty('TZ');               // Időzőna
-const RECIPIENT_LIST        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_LIST');   // A heti beosztást megkapók e-mail-címe
-const RECIPIENT_TEAM        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_TEAM');   // A heti nyomtatási megkapók e-mail-címe
+const RECIPIENT_LIST        = "gellert.gyuris@gmail.com" //PropertiesService.getScriptProperties().getProperty('RECIPIENT_LIST');   // A heti beosztást megkapók e-mail-címe
+const RECIPIENT_TEAM        = "gellert.gyuris@gmail.com" //PropertiesService.getScriptProperties().getProperty('RECIPIENT_TEAM');   // A heti nyomtatási megkapók e-mail-címe
+const START                 = getNextMonday(new Date()) // következő hét hétfője és rá egy hét
+const END                   = getEndDate(START);
 
-// main
+/**
+ * Main: Email küldések
+ */
 function sendEmail() {
-  let events = getCalendarText();
-  let messageHTML = '<h2>Kedves Adoráló testvérek!</h2><p>A következő hét beosztását alább találjátok. Áldott együttlétet kívánunk nektek az Úr előtt!<p/><p>Ha helyettesítés szükséges, kérjük, keressétek a koordinátort, Aradi Marit <a href="tel:+36204260219">+36204260219</a>.</p><p>Szeretettel: a vezetői csapat</p><hr>' + events.html;
+  let html = getCalendarText();
+  let messageHTML = '<h2>Kedves Adoráló testvérek!</h2><p>A következő hét beosztását alább találjátok. Áldott együttlétet kívánunk nektek az Úr előtt!<p/><p>Ha helyettesítés szükséges, kérjük, keressétek a koordinátort, Aradi Marit <a href="tel:+36204260219">+36204260219</a>.</p><p>Szeretettel: a vezetői csapat</p><hr>' + html;
   GmailApp.sendEmail(
     RECIPIENT_LIST,
-    "Következő hét beosztása: " + Utilities.formatDate(events.start, TZ, "w") + ". hét\n",
+    "Következő hét beosztása: " + Utilities.formatDate(START, TZ, "yyyy, w") + ". hét\n",
     stripHtml(messageHTML),
     {
       name: 'Adoratio Szeged',
       htmlBody : messageHTML
     }
   );
-  let file = createChecklistDocument();
+  let fileChecklist = createChecklistDocument();
+  let fileCalendar  = getPrintableCalendarTable();
+  messageHTML = "<h2>Helló Marika, Adorján, Gellért!</h2><p>Íme a heti ellenőrző lista és az áttekintő naptár a szentségimádáshoz. Ezt a két mellékletet kell kinyomtatni és bevinni a hétfői nyitásig...</p><p>Fáradhatatlanul: a gép</p>";
   GmailApp.sendEmail(
     RECIPIENT_TEAM,
-    "Nyomtasd ki és vidd el a Jezsikhez: " + Utilities.formatDate(events.start, TZ, "w") + ". hét\n",
-    "Helló Marika, Gellért, Adorján!\nÍme a heti ellenőrző lista a szentségimádáshoz. Ezt a mellékletet kell kinyomtatni...\n\nFáradhatatlanul: a gép\n",
+    "Nyomtasd ki és vidd el a Jezsikhez: " + Utilities.formatDate(START, TZ, "yyyy, w") + ". hét\n",
+    stripHtml(messageHTML),
     {
       name: 'Adoratio Szeged',
-      attachments: [file.getAs(MimeType.PDF)]
+      htmlBody : messageHTML,
+      attachments: [fileChecklist.getAs(MimeType.PDF), fileCalendar.getAs(MimeType.PDF)]
     }
   );
 }
 
+/**
+ * Nyomtathtó ellenőrő lista dokumentumának összeállítása
+ */
 function createChecklistDocument(sDate) {
-  let events = getEvents();
+  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LAUD, CALENDAR_BIBLE]);
   let templateFile = DriveApp.getFileById(TEMPLATE_FILE_ID);
   let destinationFolder = DriveApp.getFolderById(DESTINATION_FOLDER_ID);
-  let fileName =  Utilities.formatDate(events.start, TZ, "yyyy-MM-dd") + " Heti beosztás, ellenőrzőlista";
+  let fileName =  Utilities.formatDate(START, TZ, "yyyy-MM-dd") + " Heti beosztás, ellenőrzőlista";
   let newFile = templateFile.makeCopy(fileName, destinationFolder);
   let fileToEdit = DocumentApp.openById(newFile.getId());
   let doc = fileToEdit.getBody();
@@ -61,12 +72,12 @@ function createChecklistDocument(sDate) {
   }
 
   // hét beállítása
-  doc.replaceText("xx", Utilities.formatDate(events.start, TZ, "w"));
+  doc.replaceText("xx", Utilities.formatDate(START, TZ, "yyyy, w"));
   // események végiglépdelése
-  if (events.data.length > 0) {
+  if (events.length > 0) {
     let day = Utilities.formatDate(new Date(), TZ, "d");
-    for (i = 0; i < events.data.length; i++) {
-      let event = events.data[i];
+    for (i = 0; i < events.length; i++) {
+      let event = events[i];
       // nap nevének kiiratása ha más, mint az előző
       if (Utilities.formatDate(event.getStartTime(), TZ, "d") != day) {
         let year = Utilities.formatDate(event.getStartTime(), TZ, "yyyy");
@@ -111,16 +122,19 @@ function createChecklistDocument(sDate) {
   return fileToEdit;
 }
 
+/**
+ * E-mail-ben küldendő lista HTML kódjának összeállítása
+ */
 function getCalendarText(){
-  let events = getEvents();
+  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LAUD, CALENDAR_BIBLE]);
   // hanyadik hét
-  let html = "<h3>" + Utilities.formatDate(events.start, TZ, "w") + ". hét</h3>";
+  let html = "<h3>" + Utilities.formatDate(START, TZ, "w") + ". hét</h3>";
   // események lekérdezése a naptárból a dátumok alapján
-  if (events.data.length > 0) {
+  if (events.length > 0) {
     let day = Utilities.formatDate(new Date(), TZ, "d");
     // végiglépdelés
-    for (i = 0; i < events.data.length; i++) {
-      let event = events.data[i];
+    for (i = 0; i < events.length; i++) {
+      let event = events[i];
       // nap nevének kiiratása ha más, mint az előző
       if (Utilities.formatDate(event.getStartTime(), TZ, "d") != day) {
         let year = Utilities.formatDate(event.getStartTime(), TZ, "yyyy");
@@ -142,33 +156,111 @@ function getCalendarText(){
     Logger.log('Nincsenek következő események.');
   }
   //Logger.log(html)
-  return { html: html, start: events.start };
+  return html;
 }
 
+/**
+ * Nyomtatható áttekintő naptár összeállítása (lásd még: CalendarTemplate.html)
+ */
+function getPrintableCalendarTable() {
+  let t = HtmlService.createTemplateFromFile('CalendarTemplate');
+  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LAUD, CALENDAR_BIBLE, CALENDAR_CHURCH]);
+  t.currentWeek = Utilities.formatDate(START, TZ, "yyyy, w");
+  t.days = fillDays(); //events.end.setDate(events.end.getDate() - 1)
+  t.gridTemplateAreas = fillGridTemplateAreas(events);
+  t.eventsByAreas = fillAreas(t.gridTemplateAreas, events);
+  let htmlBody = t.evaluate().getContent();
+  let fileName =  Utilities.formatDate(START, TZ, "yyyy-MM-dd") + " Heti áttekintő naptár";
+  let destinationFolder = DriveApp.getFolderById(DESTINATION_FOLDER_ID);
+  let blob = Utilities.newBlob(htmlBody, MimeType.HTML).getAs(MimeType.PDF).setName(fileName);
+  let file = destinationFolder.createFile(blob);
+  return file;
+}
+
+// események dobozba rendezése
+function fillAreas(areas, data) {
+  function getEventsForArea(el) {
+    let array = [];
+    for (let i = 0; i < data.length; i++) {
+      if (el.endsWith(Utilities.formatDate(data[i].getStartTime(), TZ, "yyyyMMdd-HH"))) {
+        array.push(data[i]);
+        data.splice(i, 1);
+        i--;
+      }
+    }
+    return array;
+  }
+  let names = {};
+  for (let i = 1; i < areas.length; i++) {
+    for (let j = 1; j < areas[i].length;j++) {
+      if (typeof names[areas[i][j]] == 'undefined') {
+        names[areas[i][j]] = getEventsForArea(areas[i][j]);
+      }
+    }
+  }
+  return names;
+}
+
+// grid-template-areas CSS feltöltési adatai
+function fillGridTemplateAreas(data) {
+  // alapértelmezet rácsozat kialakítása: minden lehetséges órának egy cella: day-2023-12-25-00 formáumkóddal
+  let array = [ [".", "day1", "day2", "day3", "day4", "day5", "day6", "day7"]];
+  for (let i = 1; i <= 24; i++) {
+    array.push(["hour" + to2Number(i-1)]);
+    let current = new Date(START);
+    for (current; current < END; current.setDate(current.getDate() + 1)) {
+      array[i].push("day-" + Utilities.formatDate(current, TZ, "yyyyMMdd") + "-" + to2Number(i-1));
+    }
+    //console.log(array)
+  }
+  // felülírás ott, ahol két vagy több óra össze van vonva (kezdő és befejező érték nagyobb, mint 1 óra)
+  for (i = 0; i < data.length; i++) {
+    let event = data[i];
+    let deltaHour = Math.abs(event.getStartTime() - event.getEndTime()) / 36e5;
+    if (deltaHour > 1 ) {
+      let name = "day-" + Utilities.formatDate(event.getStartTime(), TZ, "yyyyMMdd-HH");
+      let index2D = indexOf2D(array, name);
+      // a kezdő formátumkód felülírása
+      for (let j = 1; j < deltaHour; j++) {
+        array[index2D[0]+j][index2D[1]] = name;
+      }
+    }
+  }
+  return array;
+}
+
+// dátumok feltöltése
+function fillDays() {
+  let array = [];
+  let current = new Date(START);
+  for (current; current < END; current.setDate(current.getDate() + 1)) {
+    array.push(Utilities.formatDate(current, TZ, "yyyy. MM. dd.") + ", " + getHUNday(current.getDay()).toUpperCase());
+  }
+  return array;
+}
+
+/**
+ * Közös segédfunkciók
+ */
 // események lekérdezése a naptárakból
-function getEvents(){
-  const calendar = CalendarApp.getDefaultCalendar();
-  const calendarWorship = CalendarApp.getCalendarById(CALENDAR_WORSHIP);
-  const calendarLaud = CalendarApp.getCalendarById(CALENDAR_LAUD);
-  const calendarBible = CalendarApp.getCalendarById(CALENDAR_BIBLE);
+function getEvents(aCalendar){
+  // több naptár összefűzése és sorbarendezése
+  let events = [];
+  aCalendar.forEach(function(item) {
+    events = events.concat(CalendarApp.getCalendarById(item).getEvents(START, END));
+  })
+  events.sort((a, b) => {return a.getStartTime().valueOf() - b.getStartTime().valueOf()});
+  return events;
+}
 
-  // következő hét hétfője és rá egy hét
-  let monday = getNextMonday(new Date());
-  let week = getNextMonday(new Date());
+function getEndDate(date) {
+  let week = new Date(date);
   week.setDate(week.getDate() + (((1 + 7 - week.getDay()) % 7) || 7));
-
-  // több naptár összefűzése
-  let arrayEvents = calendar.getEvents(monday, week);
-  arrayEvents = arrayEvents.concat(calendarWorship.getEvents(monday, week));
-  arrayEvents = arrayEvents.concat(calendarLaud.getEvents(monday, week));
-  arrayEvents = arrayEvents.concat(calendarBible.getEvents(monday, week));
-  arrayEvents.sort((a, b) => {return a.getStartTime().valueOf() - b.getStartTime().valueOf()});
-
-  return { start: monday, end: week, data: arrayEvents };
+  return week;
 }
 
 // a mai dátumhoz legközelebbi hétfő 00:00 meghatározása
-function getNextMonday(date = new Date()) {
+function getNextMonday(date) {
   const dateCopy = new Date(date.getTime());
   const nextMonday = new Date(
     dateCopy.setDate(
@@ -177,6 +269,20 @@ function getNextMonday(date = new Date()) {
   );
   nextMonday.setHours(0, 0, 0);
   return nextMonday;
+}
+
+// kétdimenziós tömbkeresés
+function indexOf2D(array, item) {
+  for (let i = 0; i < array.length; i++) {
+    let position = array[i].indexOf(item);
+    if (position > -1) return [i, position];
+  }
+  return -1;
+}
+
+// két karakterre formázás
+function to2Number(n) {
+    return (n < 10) ? '0' + n.toString() : n.toString();
 }
 
 // eltávolítja a HTML címkéket úgy, hogy ügyel a blokk szintű elemek új sorral való helyes helyettesítésére

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css" media = "screen, print">
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
+html, body {
+  -webkit-print-color-adjust: exact;
+  margin: 0;
+  font-size: 8pt;
+  font-family: 'Roboto', sans-serif;
+}
+h1 {
+  margin: 0;
+  padding: 0;
+  height: 1cm;
+}
+.week {
+  display: grid;
+  grid-template-columns: .5fr repeat(7, 1fr);
+  grid-template-rows: repeat(25, 1fr);
+  gap: 1px 1px;
+  grid-template-areas:
+    <? for (var i = 0; i < gridTemplateAreas.length; i++) { ?>
+      "<?= gridTemplateAreas[i].join(" ") ?>"
+    <? } ?>;
+  height: 18cm;
+}
+.week > div {
+  display: flex;
+  gap: 1px;
+  /*align-items: center;*/
+  justify-content: center;
+  min-height: 0px;
+  min-width: 0px;
+}
+.week > div.header {
+  align-items: center;
+  background: rgba(240,240,240,0.8);
+  border: 1px solid rgb(210,210,210);
+  border-radius: 4pt;
+}
+.week > div:nth-last-of-type(1):empty,
+.week > div:nth-last-of-type(2):empty,
+.week > div:nth-last-of-type(3):empty,
+.week > div:nth-last-of-type(4):empty,
+.week > div:nth-last-of-type(5):empty,
+.week > div:nth-last-of-type(6):empty,
+.week > div:nth-last-of-type(7):empty  {
+  border-bottom: 1px dotted rgba(127,127,127,1);
+  position: relative;
+}
+.week > div:empty + div + div + div + div + div + div + div:empty,
+.week > div:has(.nonregular),
+.week > div:has(.nonregular) + div + div + div + div + div + div + div:empty {
+  border-top: 1px dotted rgba(127,127,127,1);
+  position: relative;
+  top: 1px;
+}
+.week > div > span {
+  display: flex;
+  flex-grow: 1;
+  position: relative;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 4pt;
+  overflow: hidden;
+  padding: .1em .2em;
+  line-height: 1.1em;
+}
+.c-silent {
+  background: rgba(221,238,221,.5);
+  border: 1px solid rgba(175,215,175,1);
+}
+.c-worship {
+  background: rgba(255,173,173,.5);
+  border: 1px solid rgba(255,108,108,1);
+}
+.c-laud {
+  background: rgba(222,218,244,.5);
+  border: 1px solid rgba(188,180,233,1);
+}
+.c-bible {
+  background: rgba(217,237,248,.5);
+  border: 1px solid rgba(133,197,232,1);
+}
+.c-church {
+  background: rgba(237,222,173,.5);
+  border: 1px solid rgba(212 ,175,55,1);
+  line-height: 1em;
+  font-size: 7pt;
+}
+
+</style>
+  </head>
+  <body>
+<h1>Adoratio Szeged – Heti beosztási táblázat <?= currentWeek ?>. hét</h1>
+<section class="week">
+  <!-- órák -->
+  <div class="header line" style="grid-area: hour00">00:00–01:00</div>
+  <div class="header line" style="grid-area: hour01">01:00–02:00</div>
+  <div class="header line" style="grid-area: hour02">02:00–03:00</div>
+  <div class="header line" style="grid-area: hour03">03:00–04:00</div>
+  <div class="header line" style="grid-area: hour04">04:00–05:00</div>
+  <div class="header line" style="grid-area: hour05">05:00–06:00</div>
+  <div class="header line" style="grid-area: hour06">06:00–07:00</div>
+  <div class="header line" style="grid-area: hour07">07:00–08:00</div>
+  <div class="header line" style="grid-area: hour08">08:00–09:00</div>
+  <div class="header line" style="grid-area: hour09">09:00–10:00</div>
+  <div class="header line" style="grid-area: hour10">10:00–11:00</div>
+  <div class="header line" style="grid-area: hour11">11:00–12:00</div>
+  <div class="header line" style="grid-area: hour12">12:00–13:00</div>
+  <div class="header line" style="grid-area: hour13">13:00–14:00</div>
+  <div class="header line" style="grid-area: hour14">14:00–15:00</div>
+  <div class="header line" style="grid-area: hour15">15:00–16:00</div>
+  <div class="header line" style="grid-area: hour16">16:00–17:00</div>
+  <div class="header line" style="grid-area: hour17">17:00–18:00</div>
+  <div class="header line" style="grid-area: hour18">18:00–19:00</div>
+  <div class="header line" style="grid-area: hour19">19:00–20:00</div>
+  <div class="header line" style="grid-area: hour20">20:00–21:00</div>
+  <div class="header line" style="grid-area: hour21">21:00–22:00</div>
+  <div class="header line" style="grid-area: hour22">22:00–23:00</div>
+  <div class="header line" style="grid-area: hour23">23:00–24:00</div>
+  <!-- napok -->
+  <div class="header" style="grid-area: day1"><?= days[0] ?></div>
+  <div class="header" style="grid-area: day2"><?= days[1] ?></div>
+  <div class="header" style="grid-area: day3"><?= days[2] ?></div>
+  <div class="header" style="grid-area: day4"><?= days[3] ?></div>
+  <div class="header" style="grid-area: day5"><?= days[4] ?></div>
+  <div class="header" style="grid-area: day6"><?= days[5] ?></div>
+  <div class="header" style="grid-area: day7"><?= days[6] ?></div>
+  <!-- elemek -->
+  <? for (let el in eventsByAreas) {
+    ?><div style="grid-area: <?= el ?>"><?
+      for (var i = 0; i < eventsByAreas[el].length; i++) {
+        var calendarType, icon = "";
+        switch (eventsByAreas[el][i].getOriginalCalendarId()) {
+          case CALENDAR_SILENT:
+            calendarType = 'c-silent';
+            icon = "🔇"; // &#128263;
+            break;
+          case CALENDAR_WORSHIP:
+            calendarType = 'c-worship';
+            icon = "🎶"; // &#127926;
+            break;
+          case CALENDAR_LAUD:
+            calendarType = 'c-laud';
+            icon = "👂"; // &#128066;
+            break;
+          case CALENDAR_BIBLE:
+            calendarType = 'c-bible';
+            icon = "📖"; // &#128214;
+            break;
+          case CALENDAR_CHURCH:
+            calendarType = 'c-church';
+            break;
+        }
+        var title = eventsByAreas[el][i].getTitle(); // + " " + icon
+        var startTime = Number(Utilities.formatDate(eventsByAreas[el][i].getStartTime(), TZ, "mm"));
+        var startPercentage = startTime / 60 * 100;
+        var durationCSS = "";
+        var nonstadardClass = "";
+        var duration = Math.abs(Math.round((eventsByAreas[el][i].getStartTime() - eventsByAreas[el][i].getEndTime()) / 60000))
+        if ( duration % 60 != 0 ) {
+          durationCSS = "height: " + duration / 60 * 100 + "%";
+        }
+        if ( startTime != 0 || duration % 60 != 0 ) {
+          title = Utilities.formatDate(eventsByAreas[el][i].getStartTime(), TZ, "HH:mm") + "–" + Utilities.formatDate(eventsByAreas[el][i].getEndTime(), TZ, "HH:mm") + " " + title;
+          nonstadardClass = " nonregular";
+        }
+        ?><span style="top: <?= startPercentage ?>%;<?= durationCSS ?>" class="<?= calendarType ?><?= nonstadardClass ?>"><?= title ?></span><?
+      } ?></div><?
+  }; ?>
+</section>
+
+  </body>
+</html>
