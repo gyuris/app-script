@@ -76,19 +76,19 @@ h1 {
   line-height: 1.1em;
 }
 .c-silent {
-  background: rgba(221,238,221,.5);
+  background: rgba(221,238,221,.5) no-repeat bottom 1px right 2px /11pt url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="m616-320-56-56 104-104-104-104 56-56 104 104 104-104 56 56-104 104 104 104-56 56-104-104-104 104Zm-496-40v-240h160l200-200v640L280-360H120Zm280-246-86 86H200v80h114l86 86v-252ZM300-480Z" style="fill:rgba(85,170,85,1)"/></svg>');
   border: 1px solid rgba(175,215,175,1);
 }
 .c-worship {
-  background: rgba(255,173,173,.5);
+  background: rgba(255,173,173,.5) no-repeat bottom 1px right 2px /11pt url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z" style="fill:rgba(255,0,0,1)"/></svg>');
   border: 1px solid rgba(255,108,108,1);
 }
-.c-laud {
-  background: rgba(222,218,244,.5);
+.c-loud {
+  background: rgba(222,218,244,.5) no-repeat bottom 1px right 2px /11pt url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M80-80v-80q46 0 91-6t88-22q-46-23-72.5-66.5T160-349v-91h160v-120h135L324-822l72-36 131 262q20 40-3 78t-68 38h-56v40q0 33-23.5 56.5T320-360h-80v11q0 35 21.5 61.5T316-252l12 3q40 10 45 50t-31 60q-60 33-126.5 46T80-80Zm572-114-57-56q21-21 33-48.5t12-59.5q0-32-12-59.5T595-466l57-57q32 32 50 74.5t18 90.5q0 48-18 90t-50 74ZM765-80l-57-57q43-43 67.5-99.5T800-358q0-66-24.5-122T708-579l57-57q54 54 84.5 125T880-358q0 81-30.5 152.5T765-80Z" style="fill:rgba(79,58,197,1)"/></svg>');
   border: 1px solid rgba(188,180,233,1);
 }
 .c-bible {
-  background: rgba(217,237,248,.5);
+  background: rgba(217,237,248,.5) no-repeat bottom 1px right 2px /11pt url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M270-80q-45 0-77.5-30.5T160-186v-558q0-38 23.5-68t61.5-38l395-78v640l-379 76q-9 2-15 9.5t-6 16.5q0 11 9 18.5t21 7.5h450v-640h80v720H270Zm90-233 200-39v-478l-200 39v478Zm-80 16v-478l-15 3q-11 2-18 9.5t-7 18.5v457q5-2 10.5-3.5T261-293l19-4Zm-40-472v482-482Z" style="fill:rgba(40,154,215,1)"/></svg>');
   border: 1px solid rgba(133,197,232,1);
 }
 .c-church {
@@ -96,8 +96,8 @@ h1 {
   border: 1px solid rgba(212 ,175,55,1);
   line-height: 1em;
   font-size: 7pt;
+  border-left-width: 4px;
 }
-
 </style>
   </head>
   <body>
@@ -144,25 +144,25 @@ h1 {
         switch (eventsByAreas[el][i].getOriginalCalendarId()) {
           case CALENDAR_SILENT:
             calendarType = 'c-silent';
-            icon = "🔇"; // &#128263;
+            // icon = ''; // no_sound &#128263;
             break;
           case CALENDAR_WORSHIP:
             calendarType = 'c-worship';
-            icon = "🎶"; // &#127926;
+            // icon = ''; // music_note &#127926;
             break;
-          case CALENDAR_LAUD:
-            calendarType = 'c-laud';
-            icon = "👂"; // &#128066;
+          case CALENDAR_LOUD:
+            calendarType = 'c-loud';
+            // icon = ''; // voice_selection &#128066;
             break;
           case CALENDAR_BIBLE:
             calendarType = 'c-bible';
-            icon = "📖"; // &#128214;
+            // icon = ''; // book_5 &#128214;
             break;
           case CALENDAR_CHURCH:
             calendarType = 'c-church';
             break;
         }
-        var title = eventsByAreas[el][i].getTitle(); // + " " + icon
+        var title = eventsByAreas[el][i].getTitle();
         var startTime = Number(Utilities.formatDate(eventsByAreas[el][i].getStartTime(), TZ, "mm"));
         var startPercentage = startTime / 60 * 100;
         var durationCSS = "";

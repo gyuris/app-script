@@ -12,12 +12,12 @@ const DESTINATION_FOLDER_ID = PropertiesService.getScriptProperties().getPropert
 const TEMPLATE_FILE_ID      = PropertiesService.getScriptProperties().getProperty('TEMPLATE_FILE_ID'); // A sablonként használt zárolt G dokumentum
 const CALENDAR_SILENT       = PropertiesService.getScriptProperties().getProperty('CALENDAR_SILENT');  // Alapértelmezett naptár: csendes ima
 const CALENDAR_WORSHIP      = PropertiesService.getScriptProperties().getProperty('CALENDAR_WORSHIP'); // Naptár 2: énekes
-const CALENDAR_LAUD         = PropertiesService.getScriptProperties().getProperty('CALENDAR_LAUD');    // Naptár 3: hangos, kötött
+const CALENDAR_LOUD         = PropertiesService.getScriptProperties().getProperty('CALENDAR_LOUD');    // Naptár 3: hangos, kötött
 const CALENDAR_BIBLE        = PropertiesService.getScriptProperties().getProperty('CALENDAR_BIBLE');   // Naptár 4: Igeolvasás
 const CALENDAR_CHURCH       = PropertiesService.getScriptProperties().getProperty('CALENDAR_CHURCH');  // Templomi propramok naptára
 const TZ                    = PropertiesService.getScriptProperties().getProperty('TZ');               // Időzőna
-const RECIPIENT_LIST        = "gellert.gyuris@gmail.com" //PropertiesService.getScriptProperties().getProperty('RECIPIENT_LIST');   // A heti beosztást megkapók e-mail-címe
-const RECIPIENT_TEAM        = "gellert.gyuris@gmail.com" //PropertiesService.getScriptProperties().getProperty('RECIPIENT_TEAM');   // A heti nyomtatási megkapók e-mail-címe
+const RECIPIENT_LIST        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_LIST');   // A heti beosztást megkapók e-mail-címe
+const RECIPIENT_TEAM        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_TEAM');   // A heti nyomtatási megkapók e-mail-címe
 const START                 = getNextMonday(new Date()) // következő hét hétfője és rá egy hét
 const END                   = getEndDate(START);
 
@@ -25,7 +25,7 @@ const END                   = getEndDate(START);
  * Main: Email küldések
  */
 function sendEmail() {
-  let html = getCalendarText();
+  let html = createCalendarText();
   let messageHTML = '<h2>Kedves Adoráló testvérek!</h2><p>A következő hét beosztását alább találjátok. Áldott együttlétet kívánunk nektek az Úr előtt!<p/><p>Ha helyettesítés szükséges, kérjük, keressétek a koordinátort, Aradi Marit <a href="tel:+36204260219">+36204260219</a>.</p><p>Szeretettel: a vezetői csapat</p><hr>' + html;
   GmailApp.sendEmail(
     RECIPIENT_LIST,
@@ -37,7 +37,7 @@ function sendEmail() {
     }
   );
   let fileChecklist = createChecklistDocument();
-  let fileCalendar  = getPrintableCalendarTable();
+  let fileCalendar  = createPrintableCalendarTable();
   messageHTML = "<h2>Helló Marika, Adorján, Gellért!</h2><p>Íme a heti ellenőrző lista és az áttekintő naptár a szentségimádáshoz. Ezt a két mellékletet kell kinyomtatni és bevinni a hétfői nyitásig...</p><p>Fáradhatatlanul: a gép</p>";
   GmailApp.sendEmail(
     RECIPIENT_TEAM,
@@ -55,7 +55,7 @@ function sendEmail() {
  * Nyomtathtó ellenőrő lista dokumentumának összeállítása
  */
 function createChecklistDocument(sDate) {
-  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LAUD, CALENDAR_BIBLE]);
+  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE]);
   let templateFile = DriveApp.getFileById(TEMPLATE_FILE_ID);
   let destinationFolder = DriveApp.getFolderById(DESTINATION_FOLDER_ID);
   let fileName =  Utilities.formatDate(START, TZ, "yyyy-MM-dd") + " Heti beosztás, ellenőrzőlista";
@@ -125,8 +125,8 @@ function createChecklistDocument(sDate) {
 /**
  * E-mail-ben küldendő lista HTML kódjának összeállítása
  */
-function getCalendarText(){
-  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LAUD, CALENDAR_BIBLE]);
+function createCalendarText(){
+  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE]);
   // hanyadik hét
   let html = "<h3>" + Utilities.formatDate(START, TZ, "w") + ". hét</h3>";
   // események lekérdezése a naptárból a dátumok alapján
@@ -162,9 +162,9 @@ function getCalendarText(){
 /**
  * Nyomtatható áttekintő naptár összeállítása (lásd még: CalendarTemplate.html)
  */
-function getPrintableCalendarTable() {
+function createPrintableCalendarTable() {
   let t = HtmlService.createTemplateFromFile('CalendarTemplate');
-  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LAUD, CALENDAR_BIBLE, CALENDAR_CHURCH]);
+  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE, CALENDAR_CHURCH]);
   t.currentWeek = Utilities.formatDate(START, TZ, "yyyy, w");
   t.days = fillDays(); //events.end.setDate(events.end.getDate() - 1)
   t.gridTemplateAreas = fillGridTemplateAreas(events);
