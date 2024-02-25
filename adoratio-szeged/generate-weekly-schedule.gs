@@ -165,6 +165,14 @@ function createCalendarText(){
 function createPrintableCalendarTable() {
   let t = HtmlService.createTemplateFromFile('CalendarTemplate');
   let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE, CALENDAR_CHURCH]);
+  // egész napos (vagy több, mint egy napig tartó események) eltávolítása
+  let i = events.length;
+  while (i--) {
+    if (events[i].isAllDayEvent() || Math.abs(events[i].getStartTime() - events[i].getEndTime()) / 36e5 > 24) {
+      events.splice(i, 1);
+    }
+  }
+  // feldolgozás
   t.currentWeek = Utilities.formatDate(START, TZ, "yyyy, w");
   t.days = fillDays(); //events.end.setDate(events.end.getDate() - 1)
   t.gridTemplateAreas = fillGridTemplateAreas(events);
