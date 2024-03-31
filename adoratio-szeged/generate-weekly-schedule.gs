@@ -9,36 +9,44 @@
 
 // Globális beállítások:
 const DESTINATION_FOLDER_ID = PropertiesService.getScriptProperties().getProperty('DESTINATION_FOLDER_ID'); // A mappa a beosztások számára
-const TEMPLATE_FILE_ID      = PropertiesService.getScriptProperties().getProperty('TEMPLATE_FILE_ID'); // A sablonként használt zárolt G dokumentum
-const CALENDAR_SILENT       = PropertiesService.getScriptProperties().getProperty('CALENDAR_SILENT');  // Alapértelmezett naptár: csendes ima
-const CALENDAR_WORSHIP      = PropertiesService.getScriptProperties().getProperty('CALENDAR_WORSHIP'); // Naptár 2: énekes
-const CALENDAR_LOUD         = PropertiesService.getScriptProperties().getProperty('CALENDAR_LOUD');    // Naptár 3: hangos, kötött
-const CALENDAR_BIBLE        = PropertiesService.getScriptProperties().getProperty('CALENDAR_BIBLE');   // Naptár 4: Igeolvasás
-const CALENDAR_CHURCH       = PropertiesService.getScriptProperties().getProperty('CALENDAR_CHURCH');  // Templomi propramok naptára
-const TZ                    = PropertiesService.getScriptProperties().getProperty('TZ');               // Időzőna
-const RECIPIENT_LIST        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_LIST');   // A heti beosztást megkapók e-mail-címe
-const RECIPIENT_TEAM        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_TEAM');   // A heti nyomtatási megkapók e-mail-címe
+const SCHEDULE_TEMPLATE     = PropertiesService.getScriptProperties().getProperty('SCHEDULE_TEMPLATE');  // A beosztások sablona zárolt G dokumentum
+const INTETIONS_TEMPLATE    = PropertiesService.getScriptProperties().getProperty('INTETIONS_TEMPLATE'); // A szándékok sablona zárolt G dockumentum
+const CALENDAR_SILENT       = PropertiesService.getScriptProperties().getProperty('CALENDAR_SILENT');    // Alapértelmezett naptár: csendes ima
+const CALENDAR_WORSHIP      = PropertiesService.getScriptProperties().getProperty('CALENDAR_WORSHIP');   // Naptár 2: énekes
+const CALENDAR_LOUD         = PropertiesService.getScriptProperties().getProperty('CALENDAR_LOUD');      // Naptár 3: hangos, kötött
+const CALENDAR_BIBLE        = PropertiesService.getScriptProperties().getProperty('CALENDAR_BIBLE');     // Naptár 4: Igeolvasás
+const CALENDAR_CHURCH       = PropertiesService.getScriptProperties().getProperty('CALENDAR_CHURCH');    // Templomi propramok naptára
+const TZ                    = PropertiesService.getScriptProperties().getProperty('TZ');                 // Időzőna
+const RECIPIENT_LIST        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_LIST');     // A heti beosztást megkapók e-mail-címe
+const RECIPIENT_TEAM        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_TEAM');     // A heti nyomtatási megkapók e-mail-címe
+const INTETIONS_FILE        = PropertiesService.getScriptProperties().getProperty('INTETIONS_FILE');     // A szándékokat tartalmazó G táblázat
 const START                 = getNextMonday(new Date()) // következő hét hétfője és rá egy hét
 const END                   = getEndDate(START);
 
 /**
  * Main: Email küldések
+ * Egy funkcióban "Exceeded maximum execution time" hibát okoz, ezért ketté lett választva
  */
 function sendEmail() {
   let html = createCalendarText();
-  let messageHTML = '<h2>Kedves Adoráló testvérek!</h2><p>A következő hét beosztását alább találjátok. Áldott együttlétet kívánunk nektek az Úr előtt!<p/><p>Ha helyettesítés szükséges, kérjük, keressétek a koordinátort, Aradi Marit <a href="tel:+36204260219">+36204260219</a>.</p><p>Szeretettel: a vezetői csapat</p><hr>' + html;
+  let messageHTML = '<h2>Kedves Adoráló testvérek!</h2><p>A következő hét beosztását alább találjátok.</p><p>Imaszándékaink:</p><ul><li>'
+  + getIntentions(true).join('</li><li>')
+  + '</li></ul><p> Áldott együttlétet kívánunk nektek az Úr előtt!<p/><p>Ha helyettesítés szükséges, kérjük, keressétek a koordinátort, Aradi Marit <a href="tel:+36204260219">+36204260219</a>.</p><p>Szeretettel: a vezetői csapat</p><hr>';
   GmailApp.sendEmail(
     RECIPIENT_LIST,
     "Következő hét beosztása: " + Utilities.formatDate(START, TZ, "yyyy, w") + ". hét\n",
-    stripHtml(messageHTML),
+    stripHtml(messageHTML + html),
     {
       name: 'Adoratio Szeged',
-      htmlBody : messageHTML
+      htmlBody : messageHTML + html
     }
   );
-  let fileChecklist = createChecklistDocument();
-  let fileCalendar  = createPrintableCalendarTable();
-  messageHTML = "<h2>Helló Marika, Adorján, Gellért!</h2><p>Íme a heti ellenőrző lista és az áttekintő naptár a szentségimádáshoz. Ezt a két mellékletet kell kinyomtatni és bevinni a hétfői nyitásig...</p><p>Fáradhatatlanul: a gép</p>";
+}
+function sendDocuments() {
+  let fileChecklist   = createChecklistDocument();
+  let fileIntentions  = createIntentionsDocument();
+  let fileCalendar    = createPrintableCalendarTable();
+  messageHTML = "<h2>Helló Marika, Adorján, Gellért!</h2><p>Íme a heti ellenőrző lista, az áttekintő naptár és a heti imaszándék a szentségimádáshoz. Ezt a három mellékletet kell kinyomtatni és bevinni a hétfői nyitásig...</p><p>Fáradhatatlanul: a gép</p>";
   GmailApp.sendEmail(
     RECIPIENT_TEAM,
     "Nyomtasd ki és vidd el a Jezsikhez: " + Utilities.formatDate(START, TZ, "yyyy, w") + ". hét\n",
@@ -46,7 +54,7 @@ function sendEmail() {
     {
       name: 'Adoratio Szeged',
       htmlBody : messageHTML,
-      attachments: [fileChecklist.getAs(MimeType.PDF), fileCalendar.getAs(MimeType.PDF)]
+      attachments: [fileChecklist.getAs(MimeType.PDF), fileCalendar.getAs(MimeType.PDF), fileIntentions.getAs(MimeType.PDF)]
     }
   );
 }
@@ -54,9 +62,9 @@ function sendEmail() {
 /**
  * Nyomtathtó ellenőrő lista dokumentumának összeállítása
  */
-function createChecklistDocument(sDate) {
+function createChecklistDocument() {
   let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE]);
-  let templateFile = DriveApp.getFileById(TEMPLATE_FILE_ID);
+  let templateFile = DriveApp.getFileById(SCHEDULE_TEMPLATE);
   let destinationFolder = DriveApp.getFolderById(DESTINATION_FOLDER_ID);
   let fileName =  Utilities.formatDate(START, TZ, "yyyy-MM-dd") + " Heti beosztás, ellenőrzőlista";
   let newFile = templateFile.makeCopy(fileName, destinationFolder);
@@ -155,7 +163,6 @@ function createCalendarText(){
   } else {
     Logger.log('Nincsenek következő események.');
   }
-  //Logger.log(html)
   return html;
 }
 
@@ -245,6 +252,62 @@ function fillDays() {
     array.push(Utilities.formatDate(current, TZ, "yyyy. MM. dd.") + ", " + getHUNday(current.getDay()).toUpperCase());
   }
   return array;
+}
+
+/**
+ * Szándékok
+ */
+function getIntentions(addLink) {
+  let intention = [];
+  let ss = SpreadsheetApp.openById(INTETIONS_FILE);
+  // fő szándék lekérése
+  let sheet1 = ss.getSheets()[0];
+  let lastRow = sheet1.getRange(1, 1).getNextDataCell(SpreadsheetApp.Direction.DOWN).getRow()
+  let i1 = sheet1.getRange(`B${lastRow}`).getCell(1,1).getValue();
+  if (i1 != '') {
+    intention.push( [sheet1.getName()] + ': ' + i1 );
+  }
+  // a pápai havi szándék lekérdezése
+  let sheet2 = ss.getSheets()[1];
+  let month = new Date(START.setDate(1));
+  let index2 = sheet2.getDataRange().getValues().findIndex(row => new Date(row[0]).toDateString() == month.toDateString());
+  let i2 = sheet2.getRange(`B${index2+1}`).getCell(1,1).getValue();
+  let i2link = sheet2.getRange(`C${index2+1}`).getCell(1,1).getValue();
+  if (i2 != '') {
+    intention.push(
+      [sheet2.getName()]
+      + ' ('
+      + month.getFullYear()
+      + '. '
+      + getHUNMonth(month.getMonth())
+      +'): '
+      + i2
+      + (addLink && i2link != '' ? ` <a href="${i2link}">${i2link}</a>` : '')
+      );
+  }
+  // Az Adoratio Szeged saját heti szándékának lekérése
+  let sheet3 = ss.getSheets()[2];
+  let index3 = sheet3.getDataRange().getValues().findIndex(row => new Date(row[0]).toDateString() == START.toDateString());
+  let i3 = sheet3.getRange(`B${index3+1}`).getCell(1,1).getValue();
+  if (i3 != '') {
+    intention.push( [sheet3.getName()] + ': ' + i3 );
+  }
+  // visszatérés
+  return intention;
+}
+function createIntentionsDocument() {
+  let templateFile = DriveApp.getFileById(INTETIONS_TEMPLATE);
+  let destinationFolder = DriveApp.getFolderById(DESTINATION_FOLDER_ID);
+  let fileName =  Utilities.formatDate(START, TZ, "yyyy-MM-dd") + " Heti szándékok";
+  let newFile = templateFile.makeCopy(fileName, destinationFolder);
+  let fileToEdit = DocumentApp.openById(newFile.getId());
+  let doc = fileToEdit.getBody();
+
+  doc.replaceText("xx", Utilities.formatDate(START, TZ, "yyyy, w"));
+  doc.replaceText("XXX", getIntentions().join('\n\n'));
+
+  fileToEdit.saveAndClose();
+  return fileToEdit;
 }
 
 /**
