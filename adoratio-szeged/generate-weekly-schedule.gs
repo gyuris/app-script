@@ -269,7 +269,8 @@ function getIntentions(addLink) {
   }
   // a pápai havi szándék lekérdezése
   let sheet2 = ss.getSheets()[1];
-  let month = new Date(START.setDate(1));
+  let month = new Date(START);
+  month.setDate(1);
   let index2 = sheet2.getDataRange().getValues().findIndex(row => new Date(row[0]).toDateString() == month.toDateString());
   let i2 = sheet2.getRange(`B${index2+1}`).getCell(1,1).getValue();
   let i2link = sheet2.getRange(`C${index2+1}`).getCell(1,1).getValue();
