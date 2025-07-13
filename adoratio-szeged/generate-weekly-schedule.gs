@@ -46,7 +46,7 @@ function sendDocuments() {
   let fileChecklist   = createChecklistDocument();
   let fileIntentions  = createIntentionsDocument();
   let fileCalendar    = createPrintableCalendarTable();
-  messageHTML = "<h2>Helló Marika, Adorján, Gellért!</h2><p>Íme a heti ellenőrző lista, az áttekintő naptár és a heti imaszándék a szentségimádáshoz. Ezt a három mellékletet kell kinyomtatni és bevinni a hétfői nyitásig...</p><p>Fáradhatatlanul: a gép</p>";
+  messageHTML = "<h2>Helló Marika, Mária, Adorján, Gellért!</h2><p>Íme a heti ellenőrző lista, az áttekintő naptár és a heti imaszándék a szentségimádáshoz. Ezt a három mellékletet kell kinyomtatni és bevinni a hétfői nyitásig...</p><p>Fáradhatatlanul: a gép</p>";
   GmailApp.sendEmail(
     RECIPIENT_TEAM,
     "Nyomtasd ki és vidd el a Jezsikhez: " + Utilities.formatDate(START, TZ, "yyyy, w") + ". hét\n",
