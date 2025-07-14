@@ -1,16 +1,23 @@
 /**
  * Adoratio-Szeged
- * Google naptárból nyomtatható checklista generálása és * email küldése a listára a heti beosztásról és a telefonszámokról
- * Önálló szkript heti egyszeri időponton történő időzítéssel
+ * Funkciók:
+ * 1. sendEmail: Heti email küldése a listára a heti beosztásról (és a telefonszámokról)
+ * 2. sendDocuments: Google naptárból naptárnézet és nyomtatható checklista generálása és küldése a felelősöknek
+ * 3. sendPersonalNotification: Napi egyéni emlékeztető küldése N. órával az esemény előtt előtted és utánad következőkkel és telefonszámaikkal
+ * Elvárt beállítás:
+ * - A naptárakban az esemény neve a felelős neve
+ * - A naptárakban az esemény leírása a felelős telefonszáma
+ * - A naptárakban az esemény megghívottja a felelős e-mail címe
+ * Időzítések: 1-2. heti egyszeri időpontra történő időzítéssel; 3-as óránkénti folyamatos időzítéssel. Időzítés a "Triggerek" menüpontban
  * Gyuris Gellért
  */
-
-// Időzítés a "Triggerek" menüpontban
 
 // Globális beállítások:
 const DESTINATION_FOLDER_ID = PropertiesService.getScriptProperties().getProperty('DESTINATION_FOLDER_ID'); // A mappa a beosztások számára
 const SCHEDULE_TEMPLATE     = PropertiesService.getScriptProperties().getProperty('SCHEDULE_TEMPLATE');  // A beosztások sablona zárolt G dokumentum
-const INTETIONS_TEMPLATE    = PropertiesService.getScriptProperties().getProperty('INTETIONS_TEMPLATE'); // A szándékok sablona zárolt G dockumentum
+const INTETIONS_TEMPLATE    = PropertiesService.getScriptProperties().getProperty('INTETIONS_TEMPLATE'); // A szándékok sablona zárolt G dokumentum
+const NOTIFICATION_TEMPLATE = PropertiesService.getScriptProperties().getProperty('NOTIFICATION_TEMPLATE'); // A napi értesítési levél sablona zárolt G dokumentum
+const NOTIFICATION_DELTA    = PropertiesService.getScriptProperties().getProperty('NOTIFICATION_DELTA'); // A napi értesítés kb. ennyi órával előtte indítja az email-t
 const CALENDAR_SILENT       = PropertiesService.getScriptProperties().getProperty('CALENDAR_SILENT');    // Alapértelmezett naptár: csendes ima
 const CALENDAR_WORSHIP      = PropertiesService.getScriptProperties().getProperty('CALENDAR_WORSHIP');   // Naptár 2: énekes
 const CALENDAR_LOUD         = PropertiesService.getScriptProperties().getProperty('CALENDAR_LOUD');      // Naptár 3: hangos, kötött
@@ -22,6 +29,7 @@ const RECIPIENT_TEAM        = PropertiesService.getScriptProperties().getPropert
 const INTETIONS_FILE        = PropertiesService.getScriptProperties().getProperty('INTETIONS_FILE');     // A szándékokat tartalmazó G táblázat
 const START                 = getNextMonday(new Date()) // következő hét hétfője és rá egy hét
 const END                   = getEndDate(START);
+
 
 /**
  * Main: Email küldések
@@ -42,12 +50,13 @@ function sendEmail() {
     }
   );
 }
+
 function sendDocuments() {
   let fileChecklist   = createChecklistDocument();
   let fileIntentions  = createIntentionsDocument();
   let fileCalendar    = createPrintableCalendarTable();
   messageHTML = "<h2>Helló Marika, Mária, Adorján, Gellért!</h2><p>Íme a heti ellenőrző lista, az áttekintő naptár és a heti imaszándék a szentségimádáshoz. Ezt a három mellékletet kell kinyomtatni és bevinni a hétfői nyitásig...</p><p>Fáradhatatlanul: a gép</p>";
-  GmailApp.sendEmail(
+  /*GmailApp.sendEmail(
     RECIPIENT_TEAM,
     "Nyomtasd ki és vidd el a Jezsikhez: " + Utilities.formatDate(START, TZ, "yyyy, w") + ". hét\n",
     stripHtml(messageHTML),
@@ -56,14 +65,58 @@ function sendDocuments() {
       htmlBody : messageHTML,
       attachments: [fileChecklist.getAs(MimeType.PDF), fileCalendar.getAs(MimeType.PDF), fileIntentions.getAs(MimeType.PDF)]
     }
-  );
+  );*/
+}
+
+function sendPersonalNotification() {
+  // több naptár a jelentől a delta órába eső eseményeinek összefűzése és sorbarendezése
+  let start = new Date();
+  let end = new Date(new Date().setHours(start.getHours() + NOTIFICATION_DELTA));
+  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE], start, end);
+
+  events.forEach(function(item) {
+    let tag = item.getTag('PersonalNotification');
+    if (tag == null || tag == 'processed' ) {
+      let guestList = item.getGuestList();
+      for (let guest of guestList) {
+        let message = DocumentApp.openById(NOTIFICATION_TEMPLATE).getBody().getText();
+        let difference = Utilities.formatDate(new Date(item.getStartTime().getTime() - new Date().getTime()), TZ, "HH:mm")
+        let previousEvents = getEvents(
+          [CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE],
+          new Date(new Date(item.getStartTime()).setHours(item.getStartTime().getHours() - 1)),
+          new Date(item.getStartTime())
+        )
+        let nextEvents = getEvents(
+          [CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE],
+          new Date(item.getEndTime()),
+          new Date(new Date(item.getEndTime()).setHours(item.getEndTime().getHours() + 1))
+        )
+        message = message.replace("{{TeljesNév}}", item.getTitle());
+        message = message.replace("{{Delta}}", difference);
+        message = message.replace("{{DátumÉsIdőpont}}",  Utilities.formatDate(item.getStartTime(), TZ, "yyyy.MM.dd. HH:mm"));
+        message = message.replace("{{Előzők}}", ( previousEvents.length > 0 ) ? concatenateEvents(previousEvents) : 'Nincs előtted senki.' )
+        message = message.replace("{{Következők}}", ( nextEvents.length > 0 ) ? concatenateEvents(nextEvents) : 'Nincs utánad senki.' )
+
+        GmailApp.sendEmail(
+          guest.getEmail(),
+          "Várunk a szentségimádásra! (" + Utilities.formatDate(item.getStartTime(), TZ, "yyyy.MM.dd. HH:mm") + ")",
+          stripHtml(message),
+          {
+            name: 'Adoratio Szeged',
+            htmlBody : toHtml(message)
+          }
+        );
+        item.setTag('PersonalNotification', 'processed');
+      }
+    }
+  })
 }
 
 /**
  * Nyomtathtó ellenőrő lista dokumentumának összeállítása
  */
 function createChecklistDocument() {
-  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE]);
+  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE], START, END);
   let templateFile = DriveApp.getFileById(SCHEDULE_TEMPLATE);
   let destinationFolder = DriveApp.getFolderById(DESTINATION_FOLDER_ID);
   let fileName =  Utilities.formatDate(START, TZ, "yyyy-MM-dd") + " Heti beosztás, ellenőrzőlista";
@@ -80,7 +133,7 @@ function createChecklistDocument() {
   }
 
   // hét beállítása
-  doc.replaceText("xx", Utilities.formatDate(START, TZ, "yyyy, w"));
+  doc.replaceText("{{HétSzáma}}", Utilities.formatDate(START, TZ, "yyyy, w"));
   // események végiglépdelése
   if (events.length > 0) {
     let day = Utilities.formatDate(new Date(), TZ, "d");
@@ -134,7 +187,7 @@ function createChecklistDocument() {
  * E-mail-ben küldendő lista HTML kódjának összeállítása
  */
 function createCalendarText(){
-  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE]);
+  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE], START, END);
   // hanyadik hét
   let html = "<h3>" + Utilities.formatDate(START, TZ, "w") + ". hét</h3>";
   // események lekérdezése a naptárból a dátumok alapján
@@ -171,7 +224,7 @@ function createCalendarText(){
  */
 function createPrintableCalendarTable() {
   let t = HtmlService.createTemplateFromFile('CalendarTemplate');
-  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE, CALENDAR_CHURCH]);
+  let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE, CALENDAR_CHURCH], START, END);
   // egész napos (vagy több, mint egy napig tartó események) eltávolítása
   let i = events.length;
   while (i--) {
@@ -226,7 +279,6 @@ function fillGridTemplateAreas(data) {
     for (current; current < END; current.setDate(current.getDate() + 1)) {
       array[i].push("day-" + Utilities.formatDate(current, TZ, "yyyyMMdd") + "-" + to2Number(i-1));
     }
-    //console.log(array)
   }
   // felülírás ott, ahol két vagy több óra össze van vonva (kezdő és befejező érték nagyobb, mint 1 óra)
   for (i = 0; i < data.length; i++) {
@@ -304,22 +356,42 @@ function createIntentionsDocument() {
   let fileToEdit = DocumentApp.openById(newFile.getId());
   let doc = fileToEdit.getBody();
 
-  doc.replaceText("xx", Utilities.formatDate(START, TZ, "yyyy, w"));
-  doc.replaceText("XXX", getIntentions().join('\n\n'));
+  doc.replaceText("{{HétSzáma}}", Utilities.formatDate(START, TZ, "yyyy, w"));
+  doc.replaceText("{{Szándékok}}", getIntentions().join('\n\n'));
 
   fileToEdit.saveAndClose();
   return fileToEdit;
 }
 
 /**
+ * Napi értesítések
+ */
+function formatEvent(event) {
+  let start = Utilities.formatDate(event.getStartTime(), TZ, "HH:mm");
+  let end = Utilities.formatDate(event.getEndTime(), TZ, "HH:mm");
+  let title = event.getTitle();
+  let description = event.getDescription().replace(/<\/?[^>]+(>|$)/g, "");
+  return '' + start + '–' + end + ' ' + title + ' (<a href="tel:' + description + '">' + description +'</a>)';
+}
+
+function concatenateEvents(events){
+  let str = '<ul>';
+  events.forEach(function(item) {
+    str += '<li>' + formatEvent(item) + '</li>';
+  });
+  str += '</ul>'
+  return str;
+}
+
+/**
  * Közös segédfunkciók
  */
 // események lekérdezése a naptárakból
-function getEvents(aCalendar){
+function getEvents(aCalendar, start, end){
   // több naptár összefűzése és sorbarendezése
   let events = [];
   aCalendar.forEach(function(item) {
-    events = events.concat(CalendarApp.getCalendarById(item).getEvents(START, END));
+    events = events.concat(CalendarApp.getCalendarById(item).getEvents(start, end));
   })
   events.sort((a, b) => {return a.getStartTime().valueOf() - b.getStartTime().valueOf()});
   return events;
@@ -360,6 +432,11 @@ function to2Number(n) {
 // eltávolítja a HTML címkéket úgy, hogy ügyel a blokk szintű elemek új sorral való helyes helyettesítésére
 function stripHtml(sHTML) {
    return sPlainText = sHTML.replace(/(<(h1|h2|h3|h4|h5|h6|hr|div)>)/gi, "\n\n").replace(/(<(p|li)>)/gi, "\n").replace(/(<([^>]+)>)/gi, "");
+}
+
+// a sorvégeket <br/>-re cseréli
+function toHtml(str) {
+   return str.replace(/\n/gi, "<br/>");
 }
 
 function getHUNMonth(n) {
