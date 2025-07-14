@@ -56,7 +56,7 @@ function sendDocuments() {
   let fileIntentions  = createIntentionsDocument();
   let fileCalendar    = createPrintableCalendarTable();
   messageHTML = "<h2>Helló Marika, Mária, Adorján, Gellért!</h2><p>Íme a heti ellenőrző lista, az áttekintő naptár és a heti imaszándék a szentségimádáshoz. Ezt a három mellékletet kell kinyomtatni és bevinni a hétfői nyitásig...</p><p>Fáradhatatlanul: a gép</p>";
-  /*GmailApp.sendEmail(
+  GmailApp.sendEmail(
     RECIPIENT_TEAM,
     "Nyomtasd ki és vidd el a Jezsikhez: " + Utilities.formatDate(START, TZ, "yyyy, w") + ". hét\n",
     stripHtml(messageHTML),
@@ -65,7 +65,7 @@ function sendDocuments() {
       htmlBody : messageHTML,
       attachments: [fileChecklist.getAs(MimeType.PDF), fileCalendar.getAs(MimeType.PDF), fileIntentions.getAs(MimeType.PDF)]
     }
-  );*/
+  );
 }
 
 function sendPersonalNotification() {
