@@ -10,33 +10,38 @@
  */
 
 function createCalendarEvent() {
-  var sheet = SpreadsheetApp.getActiveSheet();
-  var calendar = CalendarApp.getCalendarById('adoratio.szeged@gmail.com');
+  const SHEET = SpreadsheetApp.getActiveSheet();
+  const CALENDARS_ID = {
+    'csendes' : 'adoratio.szeged@gmail.com',
+    'hangos, kötött ima (pl. zsolozsma, Rózsafüzér)' : 'd71ab7261481207181b04219a2aa964f68234b19aef0daed659b0ee34aa915bf@group.calendar.google.com',
+    'Igehallgatás' : '518f8b15885e20f9801f3e8968a810328f76fba6eb1d7ccb0e2b8dbc69b217f2@group.calendar.google.com',
+    'ének, hangszeres kísérettel (pl. dicsőítés)' : '359919ac3b0ae60f349cd7fa3eb4d54527c08259f6f80eb03b9ea3732e3ae684@group.calendar.google.com'
+  }
+  const STARTROW = 2;
+  const COMPLETE = "Esemény bejegyezve";
 
-  var startRow = 2;
-  var numRows = sheet.getLastRow(); // Number of rows to process
-  var numColumns = sheet.getLastColumn();
-
-  var dataRange = sheet.getRange(startRow, 1, numRows-1, numColumns);
-  var data = dataRange.getValues();
-
-  var complete = "Esemény bejegyezve";
+  let numRows = SHEET.getLastRow(); // Feldolgozandó sorok száma
+  let numColumns = SHEET.getLastColumn(); // Utolsó oszlop száma
+  let data = SHEET.getRange(STARTROW, 1, numRows-1, numColumns).getValues(); // Adatok lekérdezése
 
   for (var i = 0; i < data.length; ++i) {
-    var row = data[i];
-    if (row[8] != complete) {
-      var currentCell = sheet.getRange(startRow + i, 9);
-      var name = row[2];
-      var rDate = new Date(row[3]);
-      var eDate = new Date(new Date(row[3]).setHours( rDate.getHours() + 1 ));
-      var contact = row[1];
+    let row = data[i];
+    if (row[numColumns-1] != COMPLETE) {
+      let contact = row[1];
+      let name = row[2];
+      let phone = row[3];
+      let rDate = new Date(row[4]);
+      let eDate = new Date(new Date(row[4]).setHours( rDate.getHours() + 1 ));
+      let type = row[5];
+
+      let calendar = CalendarApp.getCalendarById(CALENDARS_ID[type]);
       calendar.createEvent(name, rDate, eDate, {
-        description: name + ' (' + row[5] + '): ' + row[4] + '\n' + contact + '\nBeküldve: ' + row[0].toLocaleDateString('hu-HU'),
+        description: phone,
         location: 'Szeged, Szegedi Szent József Templom, Dáni u. 3, 6722',
         guests: contact,
         sendInvites: true
       });
-      currentCell.setValue(complete);
+      SHEET.getRange(STARTROW + i, numColumns).setValue(COMPLETE);
     }
   }
 }
