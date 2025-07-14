@@ -71,11 +71,15 @@ function sendDocuments() {
 function sendPersonalNotification() {
   // több naptár a jelentől a delta órába eső eseményeinek összefűzése és sorbarendezése
   let start = new Date();
-  let end = new Date(new Date().setHours(start.getHours() + NOTIFICATION_DELTA));
+  let end = new Date(new Date().setHours(start.getHours() + Number(NOTIFICATION_DELTA)));
   let events = getEvents([CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE], start, end);
 
   events.forEach(function(item) {
     let tag = item.getTag('PersonalNotification');
+    /*if (tag == 'processed' ) {
+      console.log(item.getTitle() + " " + item.getStartTime())
+      item.deleteTag('PersonalNotification');
+    }*/
     if (tag == null || tag != 'processed' ) {
       let guestList = item.getGuestList();
       for (let guest of guestList) {
