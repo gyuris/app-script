@@ -76,7 +76,7 @@ function sendPersonalNotification() {
 
   events.forEach(function(item) {
     let tag = item.getTag('PersonalNotification');
-    if (tag == null || tag == 'processed' ) {
+    if (tag == null || tag != 'processed' ) {
       let guestList = item.getGuestList();
       for (let guest of guestList) {
         let message = DocumentApp.openById(NOTIFICATION_TEMPLATE).getBody().getText();
