@@ -213,7 +213,7 @@ function createCalendarText(){
       let end = Utilities.formatDate(event.getEndTime(), TZ, "HH:mm");
       let title = event.getTitle();
       let description = event.getDescription().replace(/<\/?[^>]+(>|$)/g, "");
-      html += '<p><span>' + start + '–' + end + '</span> <strong>' + title + '</strong> (<a href="tel:' + description + '">' + description +'</a>)</p>';
+      html += '<p><span>' + start + '–' + end + '</span> <strong>' + title + '</strong></p>';
            // következő nap vizsgálatához
       day = Utilities.formatDate(event.getStartTime(), TZ, "d");
     }
