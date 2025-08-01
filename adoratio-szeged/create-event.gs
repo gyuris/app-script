@@ -36,10 +36,8 @@ function createCalendarEvent() {
 
       let calendar = CalendarApp.getCalendarById(CALENDARS_ID[type]);
       calendar.createEvent(name, rDate, eDate, {
-        description: phone,
-        location: 'Szeged, Szegedi Szent József Templom, Dáni u. 3, 6722',
-        guests: contact,
-        sendInvites: true
+        description: phone + '<br/>' + contact,
+        location: 'Szeged, Szegedi Szent József Templom, Dáni u. 3, 6722'
       });
       SHEET.getRange(STARTROW + i, numColumns).setValue(COMPLETE);
     }

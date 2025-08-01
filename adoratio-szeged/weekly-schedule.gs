@@ -9,6 +9,7 @@
  * - A naptárakban az esemény leírása a felelős telefonszáma
  * - A naptárakban az esemény megghívottja a felelős e-mail címe
  * Időzítések: 1-2. heti egyszeri időpontra történő időzítéssel; 3-as óránkénti folyamatos időzítéssel. Időzítés a "Triggerek" menüpontban
+ * API: https://developers.google.com/apps-script/reference/calendar/calendar
  * Gyuris Gellért
  */
 
@@ -49,6 +50,7 @@ function sendEmail() {
       htmlBody : messageHTML + html
     }
   );
+  console.log('Heti beosztás elküldve a listára: ' + stripHtml(messageHTML + html) );
 }
 
 function sendDocuments() {
@@ -66,6 +68,7 @@ function sendDocuments() {
       attachments: [fileChecklist.getAs(MimeType.PDF), fileCalendar.getAs(MimeType.PDF), fileIntentions.getAs(MimeType.PDF)]
     }
   );
+  console.log('Heti beosztás nyomtatandó dokumentumai elküldve (' + RECIPIENT_TEAM + '):' + stripHtml(messageHTML) );
 }
 
 function sendPersonalNotification() {
@@ -77,14 +80,13 @@ function sendPersonalNotification() {
   events.forEach(function(item) {
     let tag = item.getTag('PersonalNotification');
     /*if (tag == 'processed' ) {
-      console.log(item.getTitle() + " " + item.getStartTime())
       item.deleteTag('PersonalNotification');
     }*/
     if (tag == null || tag != 'processed' ) {
-      let guestList = item.getGuestList();
-      for (let guest of guestList) {
+      let email = getEmailFromDescription(item);
+      if ( email != '' ) {
         let message = DocumentApp.openById(NOTIFICATION_TEMPLATE).getBody().getText();
-        let difference = Utilities.formatDate(new Date(item.getStartTime().getTime() - new Date().getTime()), TZ, "HH:mm")
+        let difference = item.getStartTime().getTime() - new Date().getTime();
         let previousEvents = getEvents(
           [CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE],
           new Date(new Date(item.getStartTime()).setHours(item.getStartTime().getHours() - 1)),
@@ -95,14 +97,31 @@ function sendPersonalNotification() {
           new Date(item.getEndTime()),
           new Date(new Date(item.getEndTime()).setHours(item.getEndTime().getHours() + 1))
         )
+        let type = '';
+        switch (item.getOriginalCalendarId()) {
+          case CALENDAR_SILENT:
+            type = 'Csendes ima';
+            break;
+          case CALENDAR_WORSHIP:
+            type = 'ének hangszeres kísérettel (pl. dicsőítés)';
+            break;
+          case CALENDAR_LOUD:
+            type = 'hangos, kötött ima (pl. zsolozsma, Rózsafüzér)';
+            break;
+          case CALENDAR_BIBLE:
+            type = 'Igehallgatás, a Szentírás szavainak olvasása';
+            break;
+        }
         message = message.replace("{{TeljesNév}}", item.getTitle());
-        message = message.replace("{{Delta}}", difference);
+        message = message.replace("{{DeltaÓra}}", Math.floor((difference % 86400000) / 3600000));
+        message = message.replace("{{DeltaPerc}}", Math.round(((difference % 86400000) % 3600000) / 60000));
         message = message.replace("{{DátumÉsIdőpont}}",  Utilities.formatDate(item.getStartTime(), TZ, "yyyy.MM.dd. HH:mm"));
         message = message.replace("{{Előzők}}", ( previousEvents.length > 0 ) ? concatenateEvents(previousEvents) : 'Nincs előtted senki.' )
         message = message.replace("{{Következők}}", ( nextEvents.length > 0 ) ? concatenateEvents(nextEvents) : 'Nincs utánad senki.' )
+        message = message.replace("{{Típus}}", type);
 
         GmailApp.sendEmail(
-          guest.getEmail(),
+          email,
           "Várunk a szentségimádásra! (" + Utilities.formatDate(item.getStartTime(), TZ, "yyyy.MM.dd. HH:mm") + ")",
           stripHtml(message),
           {
@@ -111,6 +130,7 @@ function sendPersonalNotification() {
           }
         );
         item.setTag('PersonalNotification', 'processed');
+        console.log('Értesítés elküldve ' + email + ' számára: ' + message);
       }
     }
   })
@@ -212,7 +232,6 @@ function createCalendarText(){
       let start = Utilities.formatDate(event.getStartTime(), TZ, "HH:mm");
       let end = Utilities.formatDate(event.getEndTime(), TZ, "HH:mm");
       let title = event.getTitle();
-      let description = event.getDescription().replace(/<\/?[^>]+(>|$)/g, "");
       html += '<p><span>' + start + '–' + end + '</span> <strong>' + title + '</strong></p>';
            // következő nap vizsgálatához
       day = Utilities.formatDate(event.getStartTime(), TZ, "d");
@@ -374,8 +393,8 @@ function formatEvent(event) {
   let start = Utilities.formatDate(event.getStartTime(), TZ, "HH:mm");
   let end = Utilities.formatDate(event.getEndTime(), TZ, "HH:mm");
   let title = event.getTitle();
-  let description = event.getDescription().replace(/<\/?[^>]+(>|$)/g, "");
-  return '' + start + '–' + end + ' ' + title + ' (<a href="tel:' + description + '">' + description +'</a>)';
+  let phone = getPhoneFromDescription(event);
+  return '' + start + '–' + end + ' ' + title + ' (<a href="tel:' + phone + '">' + phone +'</a>)';
 }
 
 function concatenateEvents(events){
@@ -390,6 +409,19 @@ function concatenateEvents(events){
 /**
  * Közös segédfunkciók
  */
+
+function getPhoneFromDescription(event) {
+  let results = stripHtml(event.getDescription()).match(/\+[\d-()\s]{8,15}/g);
+  if ( results.length > 0 ) return results[0];
+  return '';
+}
+
+function getEmailFromDescription(event) {
+  let results = stripHtml(event.getDescription()).match(/[\w\-\.]+@([\w-]+\.)+[\w-]{2,4}/g);
+  if (results.length > 0 ) return results[0];
+  return '';
+}
+
 // események lekérdezése a naptárakból
 function getEvents(aCalendar, start, end){
   // több naptár összefűzése és sorbarendezése
@@ -434,8 +466,8 @@ function to2Number(n) {
 }
 
 // eltávolítja a HTML címkéket úgy, hogy ügyel a blokk szintű elemek új sorral való helyes helyettesítésére
-function stripHtml(sHTML) {
-   return sPlainText = sHTML.replace(/(<(h1|h2|h3|h4|h5|h6|hr|div)>)/gi, "\n\n").replace(/(<(p|li)>)/gi, "\n").replace(/(<([^>]+)>)/gi, "");
+function stripHtml(sHtml) {
+  return sPlainText = sHtml.replace(/(<)(address|article|aside|blockquote|canvas|div|dl|dt|fieldset|figcaption|figure|footer|form|h1|h2|h3|h4|h5|h6|header|hr|main|nav|noscript|ol|pre|section|table|tfoot|video)/gi, "\n\n$1$2").replace(/(<)(ul|p|br\/?)/gi, "\n$1$2").replace(/(<)(li|dd)/gi, "\n - $1$2").replace(/<\/?[^>]+(>|$)/gi, "");
 }
 
 // a sorvégeket <br/>-re cseréli
