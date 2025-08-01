@@ -6,8 +6,7 @@
  * 3. sendPersonalNotification: Napi egyéni emlékeztető küldése N. órával az esemény előtt előtted és utánad következőkkel és telefonszámaikkal
  * Elvárt beállítás:
  * - A naptárakban az esemény neve a felelős neve
- * - A naptárakban az esemény leírása a felelős telefonszáma
- * - A naptárakban az esemény megghívottja a felelős e-mail címe
+ * - A naptárakban az esemény leírása a felelős telefonszáma és e-mail címe (pl. sortöréssel vagy más módon elválasztva; a leírás mást is tartalmazhat, az nem kerül feldolgozásra)
  * Időzítések: 1-2. heti egyszeri időpontra történő időzítéssel; 3-as óránkénti folyamatos időzítéssel. Időzítés a "Triggerek" menüpontban
  * API: https://developers.google.com/apps-script/reference/calendar/calendar
  * Gyuris Gellért
