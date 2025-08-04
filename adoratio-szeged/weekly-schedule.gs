@@ -411,13 +411,15 @@ function concatenateEvents(events){
 
 function getPhoneFromDescription(event) {
   let results = stripHtml(event.getDescription()).match(/\+[\d-()\s]{8,15}/g);
-  if ( results.length > 0 ) return results[0];
+  if (results == null) return '';
+  if (results.length > 0) return results[0];
   return '';
 }
 
 function getEmailFromDescription(event) {
   let results = stripHtml(event.getDescription()).match(/[\w\-\.]+@([\w-]+\.)+[\w-]{2,4}/g);
-  if (results.length > 0 ) return results[0];
+  if (results == null) return '';
+  if (results.length > 0) return results[0];
   return '';
 }
 
