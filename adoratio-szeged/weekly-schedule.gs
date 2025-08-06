@@ -463,7 +463,7 @@ function indexOf2D(array, item) {
 
 // két karakterre formázás
 function to2Number(n) {
-    return (n < 10) ? '0' + n.toString() : n.toString();
+    return ('0'+n).slice(-2);
 }
 
 // eltávolítja a HTML címkéket úgy, hogy ügyel a blokk szintű elemek új sorral való helyes helyettesítésére
