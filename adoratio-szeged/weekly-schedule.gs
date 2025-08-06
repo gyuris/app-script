@@ -23,7 +23,7 @@ const CALENDAR_WORSHIP      = PropertiesService.getScriptProperties().getPropert
 const CALENDAR_LOUD         = PropertiesService.getScriptProperties().getProperty('CALENDAR_LOUD');      // Naptár 3: hangos, kötött
 const CALENDAR_BIBLE        = PropertiesService.getScriptProperties().getProperty('CALENDAR_BIBLE');     // Naptár 4: Igeolvasás
 const CALENDAR_CHURCH       = PropertiesService.getScriptProperties().getProperty('CALENDAR_CHURCH');    // Templomi propramok naptára
-const TZ                    = PropertiesService.getScriptProperties().getProperty('TZ');                 // Időzőna
+const TZ                    = Session.getScriptTimeZone();                                               // Időzőna
 const RECIPIENT_LIST        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_LIST');     // A heti beosztást megkapók e-mail-címe
 const RECIPIENT_TEAM        = PropertiesService.getScriptProperties().getProperty('RECIPIENT_TEAM');     // A heti nyomtatási megkapók e-mail-címe
 const INTETIONS_FILE        = PropertiesService.getScriptProperties().getProperty('INTETIONS_FILE');     // A szándékokat tartalmazó G táblázat
@@ -412,14 +412,14 @@ function concatenateEvents(events){
 function getPhoneFromDescription(event) {
   let results = stripHtml(event.getDescription()).match(/\+[\d-()\s]{8,15}/g);
   if (results == null) return '';
-  if (results.length > 0) return results[0];
+  if (results.length > 0) return results[0].trim();
   return '';
 }
 
 function getEmailFromDescription(event) {
   let results = stripHtml(event.getDescription()).match(/[\w\-\.]+@([\w-]+\.)+[\w-]{2,4}/g);
   if (results == null) return '';
-  if (results.length > 0) return results[0];
+  if (results.length > 0) return results[0].trim();
   return '';
 }
 
