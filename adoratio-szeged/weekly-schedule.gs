@@ -115,8 +115,8 @@ function sendPersonalNotification() {
         message = message.replace("{{DeltaÓra}}", Math.floor((difference % 86400000) / 3600000));
         message = message.replace("{{DeltaPerc}}", Math.round(((difference % 86400000) % 3600000) / 60000));
         message = message.replace("{{DátumÉsIdőpont}}",  Utilities.formatDate(item.getStartTime(), TZ, "yyyy.MM.dd. HH:mm"));
-        message = message.replace("{{Előzők}}", ( previousEvents.length > 0 ) ? concatenateEvents(previousEvents) : 'Nincs előtted senki.' )
-        message = message.replace("{{Következők}}", ( nextEvents.length > 0 ) ? concatenateEvents(nextEvents) : 'Nincs utánad senki.' )
+        message = message.replace("{{Előzők}}", ( previousEvents.length > 0 ) ? concatenateEvents(previousEvents) : 'Nincs előtted senki.\n' )
+        message = message.replace("{{Következők}}", ( nextEvents.length > 0 ) ? concatenateEvents(nextEvents) : 'Nincs utánad senki.\n' )
         message = message.replace("{{Típus}}", type);
 
         GmailApp.sendEmail(
@@ -397,11 +397,11 @@ function formatEvent(event) {
 }
 
 function concatenateEvents(events){
-  let str = '<ul>';
+  let str = '';
   events.forEach(function(item) {
-    str += '<li>' + formatEvent(item) + '</li>';
+    str += '\n– ' + formatEvent(item);
   });
-  str += '</ul>'
+  str += '\n';
   return str;
 }
 
