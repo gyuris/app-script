@@ -96,6 +96,12 @@ function sendPersonalNotification() {
           new Date(item.getEndTime()),
           new Date(new Date(item.getEndTime()).setHours(item.getEndTime().getHours() + 1))
         )
+        let sameEvents = getEvents(
+          [CALENDAR_SILENT, CALENDAR_WORSHIP, CALENDAR_LOUD, CALENDAR_BIBLE],
+          new Date(item.getStartTime()),
+          new Date(item.getEndTime())
+        )
+        let siblingEvents = sameEvents.filter((event) => event.getTitle() != item.getTitle());
         let type = '';
         switch (item.getOriginalCalendarId()) {
           case CALENDAR_SILENT:
@@ -117,6 +123,7 @@ function sendPersonalNotification() {
         message = message.replace("{{DátumÉsIdőpont}}",  Utilities.formatDate(item.getStartTime(), TZ, "yyyy.MM.dd. HH:mm"));
         message = message.replace("{{Előzők}}", ( previousEvents.length > 0 ) ? concatenateEvents(previousEvents) : 'Nincs előtted senki.\n' )
         message = message.replace("{{Következők}}", ( nextEvents.length > 0 ) ? concatenateEvents(nextEvents) : 'Nincs utánad senki.\n' )
+        message = message.replace("{{Társak}}", ( siblingEvents.length > 0 ) ? concatenateEvents(siblingEvents) : 'Nincs társad.\n' )
         message = message.replace("{{Típus}}", type);
 
         GmailApp.sendEmail(
